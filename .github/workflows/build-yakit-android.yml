@@ -1,0 +1,37 @@
+name: Yakit Mobile Android APK
+on:
+  push:
+    branches:
+      - yakit-android-apk-20261011
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Unpack audited native Android source
+        run: |
+          mkdir -p android
+          base64 -d android-source.b64 > source.zip
+          unzip -q source.zip -d android
+      - name: Build real Android APK
+        working-directory: android
+        run: gradle --no-daemon :app:assembleDebug
+      - name: Verify output
+        run: test -s android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish installable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: YakMobile-Android-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
