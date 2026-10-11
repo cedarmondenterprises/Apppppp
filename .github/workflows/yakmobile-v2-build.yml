@@ -1,0 +1,40 @@
+name: YakMobile v2 Android milestone
+on:
+  push:
+    paths:
+      - 'v2-android-source.zip.b64'
+      - '.github/workflows/yakmobile-v2-build.yml'
+  workflow_dispatch:
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+      - name: Restore verified Android sources
+        run: |
+          set -euo pipefail
+          base64 -d v2-android-source.zip.b64 > android.zip
+          echo '78d6a881a3becfc9cc4fd6047e7e71fc1e458de9c03068ca340c33da46b8ad86  android.zip' | sha256sum -c -
+          unzip -q android.zip -d android
+      - name: Compile and sign debug APK
+        working-directory: android
+        run: gradle --no-daemon :app:assembleDebug
+      - name: Verify APK
+        run: |
+          test -s android/app/build/outputs/apk/debug/app-debug.apk
+          sha256sum android/app/build/outputs/apk/debug/app-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: YakMobile-v2-Android-milestone-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
