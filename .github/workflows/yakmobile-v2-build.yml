@@ -21,8 +21,12 @@ jobs:
         run: |
           set -euo pipefail
           test -d "${ANDROID_HOME:?ANDROID_HOME not set}"
-          command -v sdkmanager
-          sdkmanager --install 'platforms;android-35' 'build-tools;35.0.0'
+          sdkmanager_bin="$(command -v sdkmanager || true)"
+          if [ -z "$sdkmanager_bin" ]; then
+            sdkmanager_bin="$(find "$ANDROID_HOME/cmdline-tools" -type f -path '*/bin/sdkmanager' 2>/dev/null | sort -V | tail -1)"
+          fi
+          test -n "$sdkmanager_bin"
+          "$sdkmanager_bin" --install 'platforms;android-35' 'build-tools;35.0.0'
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.10.2
