@@ -14,13 +14,13 @@ from pathlib import Path
 
 # These RPCs query data, never create tasks, start proxies or execute plugins.
 READ_RPC = frozenset({
-    'GetBasicInfo', 'QueryHTTPFlows', 'QueryYakScript', 'QueryRisks',
+    'Version', 'QueryHTTPFlows', 'QueryYakScript', 'QueryRisks',
     'QueryPorts', 'QueryHistoryHTTPFuzzerTask', 'QueryRiskTags',
 })
 
 # Presence means only 'method defined in protocol' until a live call succeeds.
 MODULE_METHODS = {
-    'engine': ('GetBasicInfo',),
+    'engine': ('Version',),
     'traffic_history': ('QueryHTTPFlows',),
     'plugins_catalog': ('QueryYakScript',),
     'vulnerability_findings': ('QueryRisks',),
@@ -134,7 +134,7 @@ def main():
     parser = argparse.ArgumentParser(description='Yaklang read-only protocol compatibility check')
     parser.add_argument('--proto-dir', default='/opt/yakmobile-v2-bridge/protos')
     parser.add_argument('--command', choices=('doctor', 'catalogue', 'probe'), default='doctor')
-    parser.add_argument('--rpc', choices=sorted(READ_RPC), default='GetBasicInfo')
+    parser.add_argument('--rpc', choices=sorted(READ_RPC), default='Version')
     args = parser.parse_args()
     grpc, factory, _, service = load_protocol(args.proto_dir)
     payload = {'bridge': 'YakMobile v2 engine integration', 'mode': args.command,
@@ -148,7 +148,7 @@ def main():
                 payload['listener'] = 'reachable'
         except OSError:
             payload['listener'] = 'unreachable'
-        payload['read_only_probe'] = invoke_read(grpc, factory, service, 'GetBasicInfo')
+        payload['read_only_probe'] = invoke_read(grpc, factory, service, 'Version')
     else:
         payload['read_only_probe'] = invoke_read(grpc, factory, service, args.rpc)
     print(json.dumps(payload, indent=2, sort_keys=True))
