@@ -9,7 +9,7 @@ jobs:
   apk:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -45,3 +45,14 @@ jobs:
           name: YakMobile-v2-Android-milestone-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+      - name: Publish APK for simple direct download
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          base64 -w0 android/app/build/outputs/apk/debug/app-debug.apk > YakMobile-v2-debug.apk.b64
+          sha256sum android/app/build/outputs/apk/debug/app-debug.apk > YakMobile-v2-debug.apk.sha256
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add YakMobile-v2-debug.apk.b64 YakMobile-v2-debug.apk.sha256
+          git commit -m 'Publish verified YakMobile v2 debug APK'
+          git push origin "HEAD:refs/heads/$GITHUB_REF_NAME"
