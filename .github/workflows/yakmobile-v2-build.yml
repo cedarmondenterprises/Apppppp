@@ -26,6 +26,13 @@ jobs:
           base64 -d v2-android-source.zip.b64 > android.zip
           echo '78d6a881a3becfc9cc4fd6047e7e71fc1e458de9c03068ca340c33da46b8ad86  android.zip' | sha256sum -c -
           unzip -q android.zip -d android
+      - name: Keep v1 installed alongside v2
+        run: |
+          set -euo pipefail
+          sed -i "s/applicationId 'site.cedarmond.yakmobile'/applicationId 'site.cedarmond.yakmobile.v2'/" android/app/build.gradle
+          sed -i 's/android:label="YakMobile"/android:label="YakMobile v2"/' android/app/src/main/AndroidManifest.xml
+          grep -F "applicationId 'site.cedarmond.yakmobile.v2'" android/app/build.gradle
+          grep -F 'android:label="YakMobile v2"' android/app/src/main/AndroidManifest.xml
       - name: Compile and sign debug APK
         working-directory: android
         run: gradle --no-daemon :app:assembleDebug
